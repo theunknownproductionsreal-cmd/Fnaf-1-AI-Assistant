@@ -5,8 +5,8 @@ import re
 # ANSI Color Codes for Termux
 COLOR_RESET = "\033[0m"
 COLOR_PURPLE = "\033[35m"  # Bonnie
-COLOR_BROWN = "\033[33m"   # Freddy / Golden Freddy
-COLOR_YELLOW = "\033[93m"  # Chica
+COLOR_BROWN = "\033[33m"   # Freddy
+COLOR_YELLOW = "\033[93m"  # Chica / Golden Freddy
 COLOR_RED = "\033[31m"     # Foxy
 
 # FNaF 1 Hard Data, Intervals, Lore, and Easter Eggs Database
@@ -55,44 +55,45 @@ FNAF1_DATABASE = {
     }
 }
 
-# ASCII Art Library
+# Raw ASCII Strings to avoid SyntaxWarnings
 ASCII_ART = {
     "1": f"""{COLOR_PURPLE}
-    /\_/\
+    /\\_/\\
    ( o.o )  [ BONNIE THE BUNNY ]
     > ^ <
-   /|   |\
+   /|   |\\
   (_|___|_)
 {COLOR_RESET}""",
     "2": f"""{COLOR_BROWN}
      ___
-    /o o\   [ FREDDY FAZBEAR ]
+    /o o\\   [ FREDDY FAZBEAR ]
    (  =  )
-   /|   |\
+   /|   |\\
   (_|___|_)
 {COLOR_RESET}""",
     "3": f"""{COLOR_YELLOW}
     (o>
-    ///\    [ CHICA THE CHICKEN ]
+    ///\\    [ CHICA THE CHICKEN ]
    (____)
     || ||
 {COLOR_RESET}""",
     "4": f"""{COLOR_RED}
-    |\_/|
+    |\\_/|
     |o.o|   [ FOXY THE PIRATE ]
    (  V  )
-   /|   |\
+   /|   |\\
   (_|___|_)
 {COLOR_RESET}""",
     "5": f"""{COLOR_YELLOW}
      ___
-    /x x\   [ GOLDEN FREDDY ]
+    /x x\\   [ GOLDEN FREDDY ]
    (  =  )
-   /|   |\  * IT'S ME *
+   /|   |\\  * IT'S ME *
   (_|___|_)
 {COLOR_RESET}"""
 }
 
+# 1. Deterministic Fast-Path Overrides
 HARD_CODED_STRATEGIES = {
     r"how (to|do i) (beat|stop|counter) chica": "Chica approaches from the East (Right) door. Toggle your right door light to spot her window silhouette. If you hear window groans or kitchen pots clattering, shut the right door immediately.",
     r"how (to|do i) (beat|stop|counter) bonnie": "Bonnie approaches from the West (Left) door. Check your left door light frequently. If he appears in the blindspot, shut the left door until he leaves.",
@@ -101,6 +102,7 @@ HARD_CODED_STRATEGIES = {
     r"power|usage|drain": "Power drains based on active usage bars (1 to 5 bars). 1 bar (passive office) consumes 1% power every 9.6 seconds. Each added active component (Monitor, Door Light, Closed Door) adds 1 usage bar, accelerating the drain tick.",
 }
 
+# 2. Zero-Latency Engine Blocklist
 FAKE_CONCEPTS = [
     "pizza", "eat", "eating", "sparky", "phone guy alive", 
     "cupcake jumpscare", "kitchen visual", "honk nose death",
@@ -110,13 +112,16 @@ FAKE_CONCEPTS = [
 def query_ollama(user_question, night_data):
     lower_q = user_question.lower()
     
+    # Layer 1: Regex Match
     for pattern, response in HARD_CODED_STRATEGIES.items():
         if re.search(pattern, lower_q):
             return f"[LOCAL OVERRIDE]: {response}"
             
+    # Layer 2: Python Engine Firewall
     if any(fake in lower_q for fake in FAKE_CONCEPTS):
         return "[ENGINE REJECTION]: Query references non-existent game code, hoaxes, or fake fan mechanics."
 
+    # Layer 3: System Prompt for Ollama Fallback
     system_framing = (
         "You are an exact numerical UI mechanic guide for Five Nights at Freddy's 1. "
         "Answer the user's question directly in 1-2 sentences using ONLY real FNaF 1 game mechanics. "
